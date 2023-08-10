@@ -4,46 +4,46 @@
 #include <cstddef>
 #include <climits>
 
-enum mttstr_fillmode
+enum mttstr_LetterCase
+{
+	UPPERCASE,
+	LOWERCASE,
+	MIXEDCASE
+};
+
+enum mttstr_FillMode
 {
 	LEFT,
 	INTERNAL,
 	RIGHT
 };
 
-enum mttstr_flags
-{
-	UCASE = 0,
-	LCASE = 1,
-	MCASE = 2,
-	DO_NOT_NULL_TERM = 0,
-	NULL_TERM = 4
-};
-
-class mttstr
+class mttstr_Converter
 {
 	int base = 10;
 
 public:
-	char plus = 0, minus = '-', fill = ' ';
+	char plus = '+', minus = '-', fill = ' ';
+	mttstr_LetterCase letterCase = MIXEDCASE;
+	mttstr_FillMode fillMode = LEFT;
 	std::size_t width = 0;
-	int fillmode = LEFT, flags = NULL_TERM;
+	bool nullTerminate = true;
 
-	static void *mem_rev(void *mem, std::size_t n);
+	mttstr_Converter();
+	mttstr_Converter(int base, char plus, char minus, char fill, mttstr_LetterCase letterCase, mttstr_FillMode fillMode, bool nullTerminate, std::size_t width);
 
-	static constexpr bool IS_VAL_NEG(std::size_t val)
+	int GetBase();
+	void SetBase(int base);
+
+	std::size_t ValueToString(char *string, std::size_t value);
+	std::size_t StringToValue(char *string, char **lastProcessedChar);
+
+	static void *ReverseMemory(void *memory, std::size_t size);
+
+	static constexpr bool IsNegativeValue(std::size_t value)
 	{
-		return val & (size_t)1 << (sizeof(val) * CHAR_BIT - 1);
+		return value & (std::size_t)1 << (sizeof(value) * CHAR_BIT - 1);
 	}
-
-	mttstr();
-	mttstr(int base, char plus, char minus, char fill, std::size_t width, int fillmode, int flags);
-
-	void set_base(int base);
-	int get_base();
-
-	std::size_t ival_to_fstr(char *fstr, std::size_t ival);
-	std::size_t fstr_to_ival(char *fstr, char **last);
 };
 
 #endif
