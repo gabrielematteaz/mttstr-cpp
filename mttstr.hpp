@@ -2,48 +2,42 @@
 #define MTTSTR_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <climits>
 
-enum mttstr_LetterCase
-{
-	UPPERCASE,
-	LOWERCASE,
-	MIXEDCASE
-};
+void *mttstr_mem_rev(void *mem, size_t n);
 
-enum mttstr_FillMode
-{
-	LEFT,
-	INTERNAL,
-	RIGHT
-};
+#define FMT_FLAGS_UCASE 0
+#define FMT_FLAGS_LCASE 1
+#define FMT_FLAGS_MCASE 2
+#define FMT_FLAGS_LEFT_FILL 0
+#define FMT_FLAGS_INT_FILL 4
+#define FMT_FLAGS_RIGHT_FILL 8
+#define FMT_FLAGS_DO_NOT_NULL_TERM 0
+#define FMT_FLAGS_NULL_TERM 16
+#define FMT_DEF_DEC { 10, '+', '-', ' ', FMT_FLAGS_LEFT_FILL | FMT_FLAGS_NULL_TERM, 0 }
+#define FMT_DEF_HEX { 16, 0, 0, ' ', FMT_FLAGS_MCASE | FMT_FLAGS_LEFT_FILL | FMT_FLAGS_NULL_TERM, 0 }
 
-class mttstr_Converter
+#define IS_VAL_NEG(val) (val & (size_t)1 << (sizeof(val) * CHAR_BIT - 1))
+
+class mttstr_fmt_t
 {
-	int base = 10;
+	uint8_t base;
 
 public:
-	char plus = '+', minus = '-', fill = ' ';
-	mttstr_LetterCase letterCase = MIXEDCASE;
-	mttstr_FillMode fillMode = LEFT;
-	std::size_t width = 0;
-	bool nullTerminate = true;
+	uint8_t plus, minus, fill;
+	uint8_t flags;
+	uint8_t width;
 
-	mttstr_Converter();
-	mttstr_Converter(int base, char plus, char minus, char fill, mttstr_LetterCase letterCase, mttstr_FillMode fillMode, bool nullTerminate, std::size_t width);
+	mttstr_fmt_t();
+	mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width);
 
-	int GetBase();
-	void SetBase(int base);
+	uint8_t get_base() const;
+	void set_base(uint8_t base);
 
-	std::size_t ValueToString(char *string, std::size_t value);
-	std::size_t StringToValue(char *string, char **lastProcessedChar);
+	std::size_t ival_to_fstr(char *fstr, size_t ival) const;
 
-	static void *ReverseMemory(void *memory, std::size_t size);
-
-	static constexpr bool IsNegativeValue(std::size_t value)
-	{
-		return value & (std::size_t)1 << (sizeof(value) * CHAR_BIT - 1);
-	}
+	std::size_t fstr_to_ival(char *fstr, char **last) const;
 };
 
 #endif

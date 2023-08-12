@@ -1,308 +1,303 @@
 #include "mttstr.hpp"
 
-mttstr_Converter::mttstr_Converter()
+void *mttstr_mem_rev(void *mem, size_t n)
+{
+	char *m, *mn, mc;
+
+	if (mem != nullptr)
+	{
+		m = (char *)mem, mn = m + n;
+
+		while (m < mn)
+		{
+			mn--;
+			mc = *m;
+			*m = *mn;
+			m++;
+			*mn = mc;
+		}
+	}
+
+	return mem;
+}
+
+mttstr_fmt_t::mttstr_fmt_t()
+	: base(10), plus('+'), minus('-'), fill(' '), flags(FMT_FLAGS_LEFT_FILL | FMT_FLAGS_NULL_TERM), width(0)
 {
 
 }
 
-mttstr_Converter::mttstr_Converter(int base, char plus, char minus, char fill, mttstr_LetterCase letterCase, mttstr_FillMode fillMode, bool nullTerminate, std::size_t width)
-	: base(2 <= base && base <= 36 ? base : 10), plus(plus), minus(minus), fill(fill), letterCase(letterCase), fillMode(fillMode), nullTerminate(nullTerminate), width(width)
+mttstr_fmt_t::mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width)
+	: base(2 <= base && base <= 36 ? base : 10), plus(plus), minus(minus), fill(fill), flags(flags), width(width)
 {
 
 }
 
-int mttstr_Converter::GetBase()
+uint8_t mttstr_fmt_t::get_base() const
 {
 	return base;
 }
 
-void mttstr_Converter::SetBase(int base)
+void mttstr_fmt_t::set_base(uint8_t base)
 {
 	this->base = 2 <= base && base <= 36 ? base : 10;
 }
 
-std::size_t mttstr_Converter::ValueToString(char *string, std::size_t value)
+std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, size_t ival) const
 {
-	size_t valueCopy, length;
-	char *originalString, letterA, reminder, *minimumStringLength;
+	size_t len, i;
+	char *f, a, rem, *fw;
 
-	if (string != nullptr)
+	if (fstr == nullptr)
 	{
-		if (minus && IsNegativeValue(value))
+		if (minus && IS_VAL_NEG(ival))
 		{
-			valueCopy = value;
-			value = -value;
+			ival = -ival;
+			len = 1;
 		}
-		else valueCopy = 0;
-
-		originalString = string;
-
-		if (base > 10)
-		{
-			letterA = letterCase == LOWERCASE ? 87 : 55;
-
-			do
-			{
-				reminder = value % base;
-				value /= base;
-				*string = (reminder < 10 ? '0' : letterA) + reminder;
-				string++;
-			} while (value);
-		}
-		else
-		{
-			do
-			{
-				*string = '0' + value % base;
-				value /= base;
-				string++;
-			} while (value);
-		}
-
-		switch (fillMode)
-		{
-		case INTERNAL:
-			minimumStringLength = originalString + width - 1;
-
-			while (string < minimumStringLength)
-			{
-				*string = fill;
-				string++;
-			}
-
-			if (IsNegativeValue(valueCopy))
-			{
-				*string = minus;
-				string++;
-			}
-			else if (plus)
-			{
-				*string = plus;
-				string++;
-			}
-			else if (string == minimumStringLength)
-			{
-				*string = fill;
-				string++;
-			}
-
-			length = string - originalString;
-			ReverseMemory(originalString, length);
-
-			break;
-		case RIGHT:
-			if (IsNegativeValue(valueCopy))
-			{
-				*string = minus;
-				string++;
-			}
-			else if (plus)
-			{
-				*string = plus;
-				string++;
-			}
-
-			ReverseMemory(originalString, string - originalString);
-			minimumStringLength = originalString + width;
-
-			while (string < minimumStringLength)
-			{
-				*string = fill;
-				string++;
-			}
-
-			length = string - originalString;
-			
-			break;
-		default:
-			if (IsNegativeValue(valueCopy))
-			{
-				*string = minus;
-				string++;
-			}
-			else if (plus)
-			{
-				*string = plus;
-				string++;
-			}
-
-			minimumStringLength = originalString + width;
-
-			while (string < minimumStringLength)
-			{
-				*string = fill;
-				string++;
-			}
-
-			length = string - originalString;
-			ReverseMemory(originalString, length);
-
-			break;
-		}
-
-		if (nullTerminate) *string = 0;
-	}
-	else
-	{
-		if (minus && IsNegativeValue(value))
-		{
-			value = -value;
-			length = 1;
-		}
-		else length = plus ? 1 : 0;
+		else len = plus ? 1 : 0;
 
 		do
 		{
-			value /= base;
-			length++;
-		} while (value);
+			ival /= base;
+			len++;
+		} while (ival);
 
-		if (length < width) length = width;
+		if (len < width) len = width;
 	}
-
-	return length;
-}
-
-std::size_t mttstr_Converter::StringToValue(char *string, char **lastProcessedChar)
-{
-	char stringChar, maximumUppercaseLetter, maximumLowercaseLetter, minimumLetter, maximumLetter;
-	size_t sign, value;
-
-	if (string != nullptr)
+	else
 	{
-		stringChar = *string;
-
-		switch (fillMode)
+		if (minus && IS_VAL_NEG(ival))
 		{
-		case INTERNAL:
-			if (stringChar == minus)
-			{
-				string++;
-				stringChar = *string;
-				sign = -1;
-			}
-			else
-			{
-				if (stringChar == plus)
-				{
-					string++;
-					stringChar = *string;
-				}
-
-				sign = 1;
-			}
-
-			while (stringChar == fill)
-			{
-				string++;
-				stringChar = *string;
-			}
-
-			break;
-		default:
-			while (stringChar == fill)
-			{
-				string++;
-				stringChar = *string;
-			}
-
-		case RIGHT:
-			if (stringChar == minus)
-			{
-				string++;
-				stringChar = *string;
-				sign = -1;
-			}
-			else
-			{
-				if (stringChar == plus)
-				{
-					string++;
-					stringChar = *string;
-				}
-
-				sign = 1;
-			}
-
-			break;
+			i = ival;
+			ival = -ival;
 		}
+		else i = 0;
 
-		value = 0;
+		f = fstr;
 
 		if (base > 10)
 		{
-			if (letterCase & MIXEDCASE)
+			a = flags & FMT_FLAGS_LCASE ? 87 : 55;
+
+			do
 			{
-				maximumUppercaseLetter = 'A' + base - 10;
-				maximumLowercaseLetter = maximumUppercaseLetter + 32;
+				rem = ival % base;
+				ival /= base;
+				*f = (rem < 10 ? '0' : a) + rem;
+				f++;
+			} while (ival);
+		}
+		else
+		{
+			do
+			{
+				*f = '0' + ival % base;
+				ival /= base;
+				f++;
+			} while (ival);
+		}
+
+		if (flags & FMT_FLAGS_INT_FILL)
+		{
+			fw = fstr + width - 1;
+
+			while (f < fw)
+			{
+				*f = fill;
+				f++;
+			}
+
+			if IS_VAL_NEG(i)
+			{
+				*f = minus;
+				f++;
+			}
+			else if (plus)
+			{
+				*f = plus;
+				f++;
+			}
+			else if (f == fw)
+			{
+				*f = fill;
+				f++;
+			}
+
+			len = f - fstr;
+			mttstr_mem_rev(fstr, len);
+		}
+		else if (flags & FMT_FLAGS_RIGHT_FILL)
+		{
+			if IS_VAL_NEG(i)
+			{
+				*f = minus;
+				f++;
+			}
+			else if (plus)
+			{
+				*f = plus;
+				f++;
+			}
+
+			mttstr_mem_rev(fstr, f - fstr);
+			fw = fstr + width;
+
+			while (f < fw)
+			{
+				*f = fill;
+				f++;
+			}
+
+			len = f - fstr;
+		}
+		else
+		{
+			if IS_VAL_NEG(i)
+			{
+				*f = minus;
+				f++;
+			}
+			else if (plus)
+			{
+				*f = plus;
+				f++;
+			}
+
+			fw = fstr + width;
+
+			while (f < fw)
+			{
+				*f = fill;
+				f++;
+			}
+
+			len = f - fstr;
+			mttstr_mem_rev(fstr, len);
+		}
+
+		if (flags & FMT_FLAGS_NULL_TERM) *f = 0;
+	}
+
+	return len;
+}
+
+std::size_t mttstr_fmt_t::fstr_to_ival(char *fstr, char **last) const
+{
+	char fc, umax, lmax, min, max;
+	size_t s, ival;
+
+	if (fstr != nullptr)
+	{
+		fc = *fstr;
+
+		if (flags & FMT_FLAGS_INT_FILL)
+		{
+			if (fc == minus)
+			{
+				fstr++;
+				fc = *fstr;
+				s = -1;
+			}
+			else
+			{
+				if (fc == plus)
+				{
+					fstr++;
+					fc = *fstr;
+				}
+
+				s = 1;
+			}
+
+			while (fc == fill)
+			{
+				fstr++;
+				fc = *fstr;
+			}
+		}
+		else if (flags & FMT_FLAGS_RIGHT_FILL) goto right_fill;
+		else
+		{
+			while (fc == fill)
+			{
+				fstr++;
+				fc = *fstr;
+			}
+
+		right_fill:
+			if (fc == minus)
+			{
+				fstr++;
+				fc = *fstr;
+				s = -1;
+			}
+			else
+			{
+				if (fc == plus)
+				{
+					fstr++;
+					fc = *fstr;
+				}
+
+				s = 1;
+			}
+		}
+
+		ival = 0;
+
+		if (base > 10)
+		{
+			if (flags & FMT_FLAGS_MCASE)
+			{
+				umax = 'A' + base - 10;
+				lmax = umax + 32;
 
 				while (1)
 				{
-					if ('0' <= stringChar && stringChar <= '9') value = value * base + stringChar - '0';
-					else if ('A' <= stringChar && stringChar < maximumUppercaseLetter) value = value * base + stringChar - 55;
-					else if ('a' <= stringChar && stringChar < maximumLowercaseLetter) value = value * base + stringChar - 87;
+					if ('0' <= fc && fc <= '9') ival = ival * base + fc - '0';
+					else if ('A' <= fc && fc < umax) ival = ival * base + fc - 55;
+					else if ('a' <= fc && fc < lmax) ival = ival * base + fc - 87;
 					else break;
 
-					string++;
-					stringChar = *string;
+					fstr++;
+					fc = *fstr;
 				}
 			}
 			else
 			{
-				minimumLetter = letterCase & LOWERCASE ? 'a' : 'A';
-				maximumLetter = minimumLetter + base - 10;
+				min = flags & FMT_FLAGS_LCASE ? 'a' : 'A';
+				max = min + base - 10;
 
 				while (1)
 				{
-					if ('0' <= stringChar && stringChar <= '9') value = value * base + stringChar - '0';
-					else if (minimumLetter <= stringChar && stringChar < maximumLetter) value = value * base + stringChar - minimumLetter + 10;
+					if ('0' <= fc && fc <= '9') ival = ival * base + fc - '0';
+					else if (min <= fc && fc < max) ival = ival * base + fc - min + 10;
 					else break;
 
-					string++;
-					stringChar = *string;
+					fstr++;
+					fc = *fstr;
 				}
 			}
 		}
 		else
 		{
-			maximumLetter = '0' + base;
+			max = '0' + base;
 
-			while ('0' <= stringChar && stringChar < maximumLetter)
+			while ('0' <= fc && fc < max)
 			{
-				string++;
-				value = value * base + stringChar - '0';
-				stringChar = *string;
+				fstr++;
+				ival = ival * base + fc - '0';
+				fc = *fstr;
 			}
 		}
 
-		if (lastProcessedChar != nullptr) *lastProcessedChar = string;
+		if (last != nullptr) *last = fstr;
 
-		return sign * value;
+		return s * ival;
 	}
 
-	if (lastProcessedChar != nullptr) *lastProcessedChar = nullptr;
+	if (last != nullptr) *last = nullptr;
 
 	return 0;
-}
-
-void *mttstr_Converter::ReverseMemory(void *memory, std::size_t size)
-{
-	char *charMemory, *reverseCharMemory, memoryChar;
-
-	if (memory != nullptr)
-	{
-		charMemory = (char *)memory;
-		reverseCharMemory = charMemory + size;
-
-		while (charMemory < reverseCharMemory)
-		{
-			reverseCharMemory--;
-			memoryChar = *charMemory;
-			*charMemory = *reverseCharMemory;
-			charMemory++;
-			*reverseCharMemory = memoryChar;
-		}
-	}
-
-	return memory;
 }
