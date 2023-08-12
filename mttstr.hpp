@@ -37,7 +37,7 @@ public:
 
 	std::size_t ival_to_fstr(char *fstr, std::size_t ival) const;
 
-	std::size_t fstr_to_ival(char *fstr, char **last) const;
+	std::size_t fstr_to_ival(const char *fstr, const char **last) const;
 };
 
 #endif

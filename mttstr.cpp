@@ -182,7 +182,7 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 	return len;
 }
 
-std::size_t mttstr_fmt_t::fstr_to_ival(char *fstr, char **last) const
+std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) const
 {
 	char fc, umax, lmax, min, max;
 	std::size_t s, ival;
