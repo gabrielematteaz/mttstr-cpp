@@ -3,19 +3,21 @@ C++ version of "mttstr"
 
 # Example
 ```cpp
-#include "mttstr.hpp"
+#include "mttlib/mttstr/mttstr.hpp"
 #include <iostream>
 
-int main()
+int main(int argc, char *argv[])
 {
-	std::string number;
-	std::size_t value;
-	mttstr_Converter from, to(16, 0, 0, '0', UPPERCASE, LEFT, true, 0);
-	char string[32];
+	char **av = argv + 1, **avc = argv + argc, fstr[32];
+	mttstr_fmt_t from = FMT_DEF_DEC, to = FMT_DEF_HEX;
+	size_t ival;
 
-	std::cin >> number;
-	value = from.StringToValue(number.data(), nullptr);
-	std::cout << to.ValueToString(string, value) << " \'" << string << '\'' << std::endl;
+	while (av < avc)
+	{
+		ival = from.fstr_to_ival(*av, nullptr);
+		std::cout << to.ival_to_fstr(fstr, ival) << " '" << fstr << '\'' << std::endl;
+		av++;
+	}
 
 	return 0;
 }
