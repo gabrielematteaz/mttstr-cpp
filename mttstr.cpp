@@ -1,6 +1,6 @@
 #include "mttstr.hpp"
 
-void *mttstr_mem_rev(void *mem, size_t n)
+void *mttstr_mem_rev(void *mem, std::size_t n)
 {
 	char *m, *mn, mc;
 
@@ -43,9 +43,9 @@ void mttstr_fmt_t::set_base(uint8_t base)
 	this->base = 2 <= base && base <= 36 ? base : 10;
 }
 
-std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, size_t ival) const
+std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 {
-	size_t len, i;
+	std::size_t len, i;
 	char *f, a, rem, *fw;
 
 	if (fstr == nullptr)
@@ -185,7 +185,7 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, size_t ival) const
 std::size_t mttstr_fmt_t::fstr_to_ival(char *fstr, char **last) const
 {
 	char fc, umax, lmax, min, max;
-	size_t s, ival;
+	std::size_t s, ival;
 
 	if (fstr != nullptr)
 	{
