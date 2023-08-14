@@ -1,17 +1,17 @@
 #include "mttstr.hpp"
 
-void *mttstr_mem_rev(void *mem, std::size_t n)
+void *mttstr_mem_rev(void *mem, std::size_t n) noexcept
 {
-	char *m, *mn, mc;
-
 	if (mem != nullptr)
 	{
-		m = (char *)mem, mn = m + n;
+		char *m = (char *)mem, *mn = m + n;
 
 		while (m < mn)
 		{
 			mn--;
-			mc = *m;
+
+			char mc = *m;
+
 			*m = *mn;
 			m++;
 			*mn = mc;
@@ -21,32 +21,31 @@ void *mttstr_mem_rev(void *mem, std::size_t n)
 	return mem;
 }
 
-mttstr_fmt_t::mttstr_fmt_t()
+mttstr_fmt_t::mttstr_fmt_t() noexcept
 	: base(10), plus('+'), minus('-'), fill(' '), flags(FMT_FLAGS_LEFT_FILL | FMT_FLAGS_NULL_TERM), width(0)
 {
 
 }
 
-mttstr_fmt_t::mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width)
+mttstr_fmt_t::mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width) noexcept
 	: base(2 <= base && base <= 36 ? base : 10), plus(plus), minus(minus), fill(fill), flags(flags), width(width)
 {
 
 }
 
-uint8_t mttstr_fmt_t::get_base() const
+uint8_t mttstr_fmt_t::get_base() const noexcept
 {
 	return base;
 }
 
-void mttstr_fmt_t::set_base(uint8_t base)
+void mttstr_fmt_t::set_base(uint8_t base) noexcept
 {
 	this->base = 2 <= base && base <= 36 ? base : 10;
 }
 
-std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
+std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const noexcept
 {
-	std::size_t len, i;
-	char *f, a, rem, *fw;
+	std::size_t len;
 
 	if (fstr == nullptr)
 	{
@@ -67,6 +66,8 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 	}
 	else
 	{
+		std::size_t i;
+
 		if (minus && IS_VAL_NEG(ival))
 		{
 			i = ival;
@@ -74,15 +75,16 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 		}
 		else i = 0;
 
-		f = fstr;
+		char *f = fstr;
 
 		if (base > 10)
 		{
-			a = flags & FMT_FLAGS_LCASE ? 87 : 55;
+			char a = flags & FMT_FLAGS_LCASE ? 87 : 55;
 
 			do
 			{
-				rem = ival % base;
+				char rem = ival % base;
+
 				ival /= base;
 				*f = (rem < 10 ? '0' : a) + rem;
 				f++;
@@ -97,6 +99,8 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 				f++;
 			} while (ival);
 		}
+
+		char *fw;
 
 		if (flags & FMT_FLAGS_INT_FILL)
 		{
@@ -182,14 +186,12 @@ std::size_t mttstr_fmt_t::ival_to_fstr(char *fstr, std::size_t ival) const
 	return len;
 }
 
-std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) const
+std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) const noexcept
 {
-	char fc, umax, lmax, min, max;
-	std::size_t s, ival;
-
 	if (fstr != nullptr)
 	{
-		fc = *fstr;
+		char fc = *fstr;
+		std::size_t s;
 
 		if (flags & FMT_FLAGS_INT_FILL)
 		{
@@ -216,16 +218,17 @@ std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) cons
 				fc = *fstr;
 			}
 		}
-		else if (flags & FMT_FLAGS_RIGHT_FILL) goto right_fill;
 		else
 		{
-			while (fc == fill)
+			if ((flags & FMT_FLAGS_RIGHT_FILL) == 0)
 			{
-				fstr++;
-				fc = *fstr;
+				while (fc == fill)
+				{
+					fstr++;
+					fc = *fstr;
+				}
 			}
 
-		right_fill:
 			if (fc == minus)
 			{
 				fstr++;
@@ -244,14 +247,13 @@ std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) cons
 			}
 		}
 
-		ival = 0;
+		std::size_t ival = 0;
 
 		if (base > 10)
 		{
 			if (flags & FMT_FLAGS_MCASE)
 			{
-				umax = 'A' + base - 10;
-				lmax = umax + 32;
+				char umax = 'A' + base - 10, lmax = umax + 32;
 
 				while (1)
 				{
@@ -266,8 +268,7 @@ std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) cons
 			}
 			else
 			{
-				min = flags & FMT_FLAGS_LCASE ? 'a' : 'A';
-				max = min + base - 10;
+				char min = flags & FMT_FLAGS_LCASE ? 'a' : 'A', max = min + base - 10;
 
 				while (1)
 				{
@@ -282,7 +283,7 @@ std::size_t mttstr_fmt_t::fstr_to_ival(const char *fstr, const char **last) cons
 		}
 		else
 		{
-			max = '0' + base;
+			char max = '0' + base;
 
 			while ('0' <= fc && fc < max)
 			{

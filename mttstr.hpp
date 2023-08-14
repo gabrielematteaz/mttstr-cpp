@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <climits>
 
-void *mttstr_mem_rev(void *mem, std::size_t n);
+void *mttstr_mem_rev(void *mem, std::size_t n) noexcept;
 
 #define FMT_FLAGS_UCASE 0
 #define FMT_FLAGS_LCASE 1
@@ -29,15 +29,15 @@ public:
 	uint8_t flags;
 	uint8_t width;
 
-	mttstr_fmt_t();
-	mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width);
+	mttstr_fmt_t() noexcept;
+	mttstr_fmt_t(uint8_t base, uint8_t plus, uint8_t minus, uint8_t fill, uint8_t flags, uint8_t width) noexcept;
 
-	uint8_t get_base() const;
-	void set_base(uint8_t base);
+	uint8_t get_base() const noexcept;
+	void set_base(uint8_t base) noexcept;
 
-	std::size_t ival_to_fstr(char *fstr, std::size_t ival) const;
+	std::size_t ival_to_fstr(char *fstr, std::size_t ival) const noexcept;
 
-	std::size_t fstr_to_ival(const char *fstr, const char **last) const;
+	std::size_t fstr_to_ival(const char *fstr, const char **last) const noexcept;
 };
 
 #endif
