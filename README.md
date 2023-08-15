@@ -1,9 +1,9 @@
-# mttstrcpp
+# mttstr-cpp
 C++ version of "mttstr"
 
 # Example
 ```cpp
-#include "mttlib/mttstr/mttstr.hpp"
+#include "mttstr.hpp"
 #include <iostream>
 
 int main(int argc, char *argv[])
